@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class FileAction {
 
     @RequestMapping(method = {RequestMethod.GET})
-    public String _(){
+    public String index(){
         return "index";
     }
 
