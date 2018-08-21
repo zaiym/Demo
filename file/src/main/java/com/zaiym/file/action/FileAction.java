@@ -15,6 +15,7 @@ public class FileAction {
         return "index";
     }
 
+    //目录
     private String dir = "E:\\receive";
 
     @RequestMapping(value = "check/{md5}/{blockIndex}",method = {RequestMethod.GET, RequestMethod.POST})
