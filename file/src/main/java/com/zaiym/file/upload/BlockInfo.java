@@ -13,9 +13,9 @@ public class BlockInfo {
     private Long fileSize;
 
     /**
-     * 文件名称
+     * 文件后缀名
      */
-    private String fileName;
+    private String suffix;
 
     /**
      * 分块文件大小
@@ -68,19 +68,19 @@ public class BlockInfo {
     }
 
     /**
-     * 文件名称
-     * @return 文件名称
+     * 文件后缀名
+     * @return 文件后缀名
      */
-    public String getFileName() {
-        return fileName;
+    public String getSuffix() {
+        return suffix;
     }
 
     /**
-     * 文件名称
-     * @param fileName 文件名称
+     * 文件后缀名
+     * @param suffix 文件后缀名
      */
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
+    public void setSuffix(String suffix) {
+        this.suffix = suffix;
     }
 
     /**
@@ -115,13 +115,6 @@ public class BlockInfo {
         this.blockIndex = blockIndex;
     }
 
-    /**
-     * 获取文件后缀名
-     * @return 文件后缀名
-     */
-    public String getSuffix(){
-        return fileName == null ? "" : fileName.substring(fileName.lastIndexOf(".") + 1);
-    }
 
     /**
      * 分块文件数量

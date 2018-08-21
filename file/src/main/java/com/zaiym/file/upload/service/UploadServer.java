@@ -47,7 +47,7 @@ public class UploadServer {
         if (blocks != null) {
             for (File block : blocks) {
                 String fileName = block.getName();
-                if (fileName.contains(blockIndex + "_" + block)) {
+                if (fileName.startsWith(blockIndex + "_block")) {
                     return block.length();
                 }
             }
