@@ -34,7 +34,7 @@ public class UploadServer {
      * @param blockIndex 分片文件索引
      * @return 文件已上传字节数
      */
-    public long check(String md5, int blockIndex){
+    public Long check(String md5, int blockIndex){
         String filePath = dir + File.separator + md5;
         File fileDir = new File(filePath);
         //文件片段列表
@@ -44,10 +44,12 @@ public class UploadServer {
                 return pathname.getName().contains("block") && pathname.isFile();
             }
         });
-        for (File block : blocks) {
-            String fileName = block.getName();
-            if (fileName.contains(blockIndex + "_" + block)) {
-                return block.length();
+        if (blocks != null) {
+            for (File block : blocks) {
+                String fileName = block.getName();
+                if (fileName.contains(blockIndex + "_" + block)) {
+                    return block.length();
+                }
             }
         }
         return 0L;
@@ -96,9 +98,11 @@ public class UploadServer {
                 return pathname.getName().contains("block") && pathname.isFile();
             }
         });
-        for (File block : blocks) {
-            String fileName = block.getName();
-            uploads.put(Integer.parseInt(fileName.substring(0,fileName.indexOf("-"))), block.length());
+        if (blocks != null) {
+            for (File block : blocks) {
+                String fileName = block.getName();
+                uploads.put(Integer.parseInt(fileName.substring(0,fileName.indexOf("-"))), block.length());
+            }
         }
         return uploads;
     }
@@ -200,6 +204,6 @@ public class UploadServer {
                 return pathname.getName().endsWith("block") && pathname.isFile();
             }
         });
-        return blocks.length == info.getBlockCount();
+        return blocks != null && blocks.length == info.getBlockCount();
     }
 }
