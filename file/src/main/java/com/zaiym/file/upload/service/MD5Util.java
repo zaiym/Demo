@@ -67,22 +67,4 @@ public class MD5Util {
         stringbuffer.append(c0);
         stringbuffer.append(c1);
     }
-
-
-    public static void main(String[] args) throws IOException {
-    	String filepath="E:/";
-    	File file =new File(filepath+"核心业务功能需求规格书-20120120.rar");
-    	if(!file.exists())
-    	{
-    		//boolean b=file.mkdirs();
-    		 System.out.println("文件不存在");
-    	} else{
-    		long begin= System.currentTimeMillis();
-    		String md5 = getFileMD5String(file);
-    		long end= System.currentTimeMillis();
-    		System.out.println(end-begin);
-   	     System.out.println("md5:" + md5);
-    	}
-    }
-
 }
