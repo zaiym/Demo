@@ -22,7 +22,7 @@ import java.util.Map;
 
 public class UploadServer {
 
-    private String dir;
+    private final String dir;
 
     public UploadServer(String dir){
         this.dir = dir;
@@ -64,13 +64,15 @@ public class UploadServer {
      */
     public Map<Integer,Long> check(BlockInfo info, boolean isCheckMd5){
         Map<Integer,Long> uploads = new HashMap<Integer, Long>();
-        File file = new File(dir + File.separator + info.getMd5() + "." + info.getSuffix());
+        File file = new File(dir + File.separator + info.getMd5() + File.separator + info.getMd5() +"." + info.getSuffix());
         //0：文件已经上传  -1：待上传文件和服务器文件不一致
         Long state = 1L;
-        if (file.exists() && file.isFile() && file.length() == info.getFileSize()) {
-            state = 0L;
-        } else if (file.length() != info.getFileSize()) {
-            state = -1L;
+        if (file.exists() && file.isFile()) {
+            if (file.length() == info.getFileSize()) {
+                state = 0L;
+            } else if (file.length() != info.getFileSize()) {
+                state = -1L;
+            }
         }
         //检查服务器文件MD5
         if (isCheckMd5) {
@@ -101,7 +103,7 @@ public class UploadServer {
         if (blocks != null) {
             for (File block : blocks) {
                 String fileName = block.getName();
-                uploads.put(Integer.parseInt(fileName.substring(0,fileName.indexOf("-"))), block.length());
+                uploads.put(Integer.parseInt(fileName.substring(0,fileName.indexOf("_"))), block.length());
             }
         }
         return uploads;
@@ -121,6 +123,10 @@ public class UploadServer {
         long uploaded = 0L;
         File temp = null;
         try {
+            temp = new File(dir + info.getMd5());
+            if (!temp.exists()) {
+                temp.mkdirs();
+            }
             temp = new File(dir + info.getMd5() + File.separator + info.getBlockIndex() + "_block.temp");
             //文件不存在，新上传
             if (!temp.exists() || !temp.isFile()) {
@@ -165,27 +171,67 @@ public class UploadServer {
      * @param info 文件信息
      * @return 返回合并总总字节数
      */
-    public long merge(BlockInfo info) throws IOException {
-        SequenceInputStream sequenceInputStream = null;
-        OutputStream out = null;
-        try {
-            String current_dir = dir + info.getMd5() + File.separator;
-            List<InputStream> blocks = new ArrayList<InputStream>();
-            for (int i = 0; i < info.getBlockCount(); i++) {
-                File blockTemp = new File(current_dir + i + "_block.temp");
-                if (!blockTemp.exists() || !blockTemp.isFile()) {
-                    throw new RuntimeException("文件块异常！");
+    public void merge(BlockInfo info) throws IOException {
+        new Thread(new MergeJob(info)).start();
+    }
+
+    class MergeJob implements Runnable{
+        private BlockInfo info;
+
+        public MergeJob(BlockInfo info){
+            this.info = info;
+        }
+
+        @Override
+        public void run() {
+            SequenceInputStream sequenceInputStream = null;
+            OutputStream out = null;
+            try {
+                String current_dir = dir + info.getMd5() + File.separator;
+                List<InputStream> blocks = new ArrayList<InputStream>();
+                for (int i = 0; i < info.getBlockCount(); i++) {
+                    File blockTemp = new File(current_dir + i + "_block");
+                    if (!blockTemp.exists() || !blockTemp.isFile()) {
+                        throw new RuntimeException("文件块异常！");
+                    }
+                    blocks.add(new FileInputStream(blockTemp));
                 }
-                blocks.add(new FileInputStream(blockTemp));
+                Enumeration<InputStream> enumeration = Collections.enumeration(blocks);
+                sequenceInputStream = new SequenceInputStream(enumeration);
+                File file = new File(current_dir + info.getMd5() + "." + info.getSuffix());
+                out = new FileOutputStream(file);
+                long mergedLength = IOUtils.copyLarge(sequenceInputStream, out);
+                //文件合并完成，删除文件片段
+                if (mergedLength == info.getFileSize()) {
+                    deleteBlocks(info);
+                }
+            } catch (IOException e) {
+
+            } finally {
+                IOUtils.closeQuietly(sequenceInputStream);
+                IOUtils.closeQuietly(out);
             }
-            Enumeration<InputStream> enumeration = Collections.enumeration(blocks);
-            sequenceInputStream = new SequenceInputStream(enumeration);
-            File file = new File(current_dir + info.getMd5() + File.separator + "." + info.getSuffix());
-            out = new FileOutputStream(file);
-            return IOUtils.copyLarge(sequenceInputStream, out);
-        } finally {
-            IOUtils.closeQuietly(sequenceInputStream);
-            IOUtils.closeQuietly(out);
+        }
+    }
+
+    /**
+     * 删除文件片段
+     * @param info
+     */
+    public void deleteBlocks(BlockInfo info){
+        String filePath = dir + File.separator + info.getMd5();
+        File fileDir = new File(filePath);
+        //文件片段列表
+        File[] blocks = fileDir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                return pathname.getName().endsWith("block") && pathname.isFile();
+            }
+        });
+        if (blocks != null) {
+            for (File block : blocks) {
+                block.delete();
+            }
         }
     }
 
