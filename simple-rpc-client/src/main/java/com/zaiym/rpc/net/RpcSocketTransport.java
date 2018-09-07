@@ -1,6 +1,7 @@
 package com.zaiym.rpc.net;
 
 import com.zaiym.rpc.domain.RPCRequest;
+import com.zaiym.rpc.server.RpcNetTransportService;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -8,13 +9,13 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-public class RpcNetTransport {
+public class RpcSocketTransport implements RpcNetTransportService<RPCRequest>{
 
     String host;
 
     int port;
 
-    public RpcNetTransport(String host, int port) {
+    public RpcSocketTransport(String host, int port) {
         this.host = host;
         this.port = port;
     }
@@ -41,10 +42,9 @@ public class RpcNetTransport {
             out.flush();
 
             in = new ObjectInputStream(socket.getInputStream());
-            return in.readObject();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+            Object result = in.readObject();
+            return result;
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         } finally {
             if (socket != null) {
